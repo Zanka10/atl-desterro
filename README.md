@@ -52,7 +52,12 @@ O **primeiro** usuário criado vira administrador automaticamente. Depois disso,
 
 ### 1.5 Publicar na internet
 
-O caminho mais simples é a [Vercel](https://vercel.com): importe a pasta/repositório, informe as mesmas variáveis do `.env.local` e publique. Em seguida, atualize **Site URL** e **Redirect URLs** no Supabase com o domínio final.
+O sistema está publicado na [Vercel](https://vercel.com) (plano Hobby, gratuito) em <https://atletico-desterro-chi.vercel.app>, no projeto **atletico-desterro** da equipe *thiago-zanchets-projects*, com o código em <https://github.com/Zanka10/atl-desterro>.
+
+- As variáveis de ambiente de produção ficam em **Vercel → Settings → Environment Variables** (as mesmas do `.env.local`).
+- Com o repositório conectado em **Vercel → Settings → Git**, cada envio para a branch `main` publica automaticamente.
+- No Supabase, **Authentication → URL Configuration** precisa ter o endereço do site em *Site URL* e `https://atletico-desterro-chi.vercel.app/auth/callback` em *Redirect URLs*.
+- Os commits precisam ser feitos com um e-mail ligado à conta do GitHub que é dona do projeto na Vercel; caso contrário, a Vercel bloqueia a publicação (*TEAM_ACCESS_REQUIRED*).
 
 ---
 
