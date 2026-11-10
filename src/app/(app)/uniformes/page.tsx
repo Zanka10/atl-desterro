@@ -1,7 +1,7 @@
 'use client';
 
 import { useApp } from '@/components/contexto';
-import { PaginaCrud, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, PaginaCrud, ok, useDados } from '@/components/crud';
 import type { Campo } from '@/components/formulario';
 import { Carregando, Cartao, Selo, TOM_STATUS, cx } from '@/components/ui';
 import { STATUS_UNIFORME, paraOpcoes } from '@/lib/constants';
@@ -10,7 +10,8 @@ import type { Atleta } from '@/lib/types';
 
 export default function Uniformes() {
   const { supabase } = useApp();
-  const { dados: atletas } = useDados<Atleta[]>(async () => ok(await supabase.from('atletas').select('*').neq('status', 'inativo').order('nome')));
+  const { dados: atletas, recarregar, falha } = useDados<Atleta[]>(async () => ok(await supabase.from('atletas').select('*').neq('status', 'inativo').order('nome')));
+  if (falha && !atletas) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (!atletas) return <Carregando />;
 
   const porNumero = new Map<number, Atleta[]>();

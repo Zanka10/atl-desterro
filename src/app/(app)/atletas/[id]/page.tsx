@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { useApp } from '@/components/contexto';
-import { AcoesLinha, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, AcoesLinha, ok, useDados } from '@/components/crud';
 import { FormModal, type Campo } from '@/components/formulario';
 import { Abas, Avatar, Botao, Carregando, Cartao, Indicador, Selo, TOM_STATUS, Tabela, Vazio } from '@/components/ui';
 import { CAMPOS_ATLETA, camposLesao, camposOcorrencia, sincronizarLesao, sincronizarSuspensao } from '@/lib/campos';
@@ -45,7 +45,7 @@ export default function FichaAtleta() {
   const [aba, setAba] = useState<Aba>('dados');
   const [modal, setModal] = useState<{ tipo: 'atleta' | 'fin' | 'ocorrencia' | 'lesao' | 'nota' | 'acesso'; item?: Linha } | null>(null);
 
-  const { dados, carregando, recarregar } = useDados<Dados | null>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<Dados | null>(async () => {
     const { data: atleta } = await supabase.from('atletas').select('*').eq('id', id).maybeSingle();
     if (!atleta) return null;
     const jogo = 'partidas(id, adversario, data_hora, competicao, gols_pro, gols_contra, status)';
@@ -68,6 +68,7 @@ export default function FichaAtleta() {
   }, [id]);
 
   if (carregando) return <Carregando />;
+  if (falha) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (!dados) return <Cartao><Vazio titulo="Atleta não encontrado"><Link href="/atletas" className="text-primary hover:underline">Voltar para a lista</Link></Vazio></Cartao>;
   const { atleta: a, stats, convocacoes, ocorrencias, mensalidades, creditos, fin, lesoes, notas, acesso } = dados;
   const saldoCredito = creditos.reduce((s, c) => s + c.valor, 0);

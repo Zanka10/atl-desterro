@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ArteEscalacao } from '@/components/arte';
 import { useApp } from '@/components/contexto';
-import { ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, ok, useDados } from '@/components/crud';
 import { EditorEscalacao } from '@/components/escalacao';
 import { FormModal } from '@/components/formulario';
 import { Abas, Avatar, Botao, BotaoIcone, Carregando, Cartao, Selo, TOM_STATUS, Tabela, Vazio, cx, estiloCampo } from '@/components/ui';
@@ -30,7 +30,7 @@ export default function DetalhePartida() {
   const [adicionar, setAdicionar] = useState('');
   const [versao, setVersao] = useState(0);
 
-  const { dados, carregando, recarregar } = useDados<Dados | null>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<Dados | null>(async () => {
     const { data: partida } = await supabase.from('partidas').select('*').eq('id', id).maybeSingle();
     if (!partida) return null;
     const [a, c, e, s, st] = await Promise.all([
@@ -64,6 +64,7 @@ export default function DetalhePartida() {
   }, [dados]);
 
   if (carregando) return <Carregando />;
+  if (falha) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (!dados) return <Cartao><Vazio titulo="Partida não encontrada"><Link href="/partidas" className="text-primary hover:underline">Voltar para as partidas</Link></Vazio></Cartao>;
   const { partida: p, atletas, convocacoes, escalacao, subs } = dados;
   const porId = new Map(atletas.map((a) => [a.id, a]));

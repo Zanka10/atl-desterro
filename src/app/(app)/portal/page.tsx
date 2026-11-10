@@ -4,7 +4,7 @@ import { CalendarClock, Check, Copy, MapPin, Megaphone, Paperclip, Pencil, Pin, 
 import { useRef, useState } from 'react';
 import { ArteEscalacao } from '@/components/arte';
 import { useApp } from '@/components/contexto';
-import { buscarTudo, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, buscarTudo, ok, useDados } from '@/components/crud';
 import { FormModal, type Campo } from '@/components/formulario';
 import { Ranking } from '@/components/ranking';
 import { Abas, Avatar, Botao, Carregando, Cartao, Indicador, Modal, Selo, TOM_STATUS, Tabela, Vazio } from '@/components/ui';
@@ -41,7 +41,7 @@ export default function Portal() {
   const alvo = useRef<Mensalidade | null>(null);
   const hoje = hojeBR();
 
-  const { dados, carregando, recarregar } = useDados<Dados>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<Dados>(async () => {
     const [eu, elenco, partidas, esc, mens, fin, cred, avisos, eventos, stats] = await Promise.all([
       supabase.from('meu_atleta').select('*').maybeSingle(),
       supabase.from('atletas_publico').select('*'),
@@ -61,6 +61,7 @@ export default function Portal() {
     };
   });
 
+  if (falha && !dados) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (carregando || !dados) return <Carregando />;
   const { eu, elenco, partidas, convocacoes, escalacao, mensalidades, creditos, fin, stats, avisos, eventos } = dados;
   const saldoCredito = creditos.reduce((s, c) => s + c.valor, 0);

@@ -3,7 +3,7 @@
 import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, BadgeCheck, CalendarClock, CircleDollarSign, HeartPulse, MapPin, ShieldBan, UserCheck, Users, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useApp } from '@/components/contexto';
-import { buscarTudo, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, buscarTudo, ok, useDados } from '@/components/crud';
 import { GraficoReceitasDespesas, GraficoSaldo, serieMensal } from '@/components/graficos';
 import { Botao, Cabecalho, Carregando, Cartao, Indicador, Selo, Vazio } from '@/components/ui';
 import { FORMAS, PAPEIS_FIN } from '@/lib/constants';
@@ -27,7 +27,7 @@ export default function Painel() {
   const mes = hoje.slice(0, 7);
   const termo = 'Taxas de jogo';
 
-  const { dados, carregando } = useDados<Dados>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<Dados>(async () => {
     const [atl, prox, mens, fin, movs, avisos] = await Promise.all([
       supabase.from('atletas').select('id, nome, status'),
       supabase.from('partidas').select('*').eq('status', 'agendada').gte('data_hora', new Date().toISOString()).order('data_hora').limit(1).maybeSingle(),
@@ -44,6 +44,7 @@ export default function Painel() {
       movs: movs ? movs.map((m) => ({ ...m, valor: Number(m.valor) })) : [],
     };
   });
+  if (falha && !dados) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (carregando || !dados) return <Carregando />;
 
   const { atletas, proximo, convocacoes, mensalidades, fin, movs, avisos } = dados;

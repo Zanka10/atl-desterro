@@ -1,23 +1,26 @@
 'use client';
 
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { AlertTriangle, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Linha } from '@/lib/types';
-import { useApp } from './contexto';
+import { mensagemErro, useApp } from './contexto';
 import { FormModal, type Campo } from './formulario';
-import { Botao, BotaoIcone, Cabecalho, Carregando, Cartao, Tabela, estiloCampo, type Coluna } from './ui';
+import { Botao, BotaoIcone, Cabecalho, Carregando, Cartao, Tabela, Vazio, estiloCampo, type Coluna } from './ui';
 
 /** Carrega dados de forma assíncrona, com estado de carregamento e recarga manual. */
 export function useDados<T>(buscar: () => Promise<T>, deps: unknown[] = []) {
   const { erro } = useApp();
   const [dados, setDados] = useState<T | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [falha, setFalha] = useState<string | null>(null);
   const fn = useRef(buscar);
   fn.current = buscar;
   const recarregar = useCallback(async () => {
     try {
       setDados(await fn.current());
+      setFalha(null);
     } catch (e) {
+      setFalha(mensagemErro(e));
       erro(e);
     } finally {
       setCarregando(false);
@@ -25,7 +28,23 @@ export function useDados<T>(buscar: () => Promise<T>, deps: unknown[] = []) {
   }, [erro]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { recarregar(); }, deps);
-  return { dados, carregando, recarregar, setDados };
+  return { dados, carregando, recarregar, setDados, falha };
+}
+
+/** Tela exibida quando os dados não puderam ser carregados. */
+export function FalhaCarregamento({ mensagem, aoTentar }: { mensagem: string; aoTentar: () => void }) {
+  const banco = /schema cache|does not exist|column .* not exist|function .* not exist/i.test(mensagem);
+  return (
+    <Cartao>
+      <Vazio icone={<AlertTriangle className="h-6 w-6" />} titulo="Não foi possível carregar os dados"
+        descricao={banco
+          ? 'O banco de dados está desatualizado em relação ao sistema. Rode no SQL Editor do Supabase o script de atualização mais recente (pasta supabase/migrations) e tente de novo.'
+          : mensagem}>
+        <Botao variante="secundario" icone={<RefreshCw className="h-4 w-4" />} onClick={aoTentar}>Tentar de novo</Botao>
+      </Vazio>
+      {banco && <p className="border-t border-zinc-100 px-4 py-2 text-center text-xs text-zinc-400">Detalhe técnico: {mensagem}</p>}
+    </Cartao>
+  );
 }
 
 /** Lança o erro do Supabase (se houver) e devolve os dados. */
@@ -91,7 +110,7 @@ export function PaginaCrud({
   const { supabase, sucesso, erro, confirmar } = useApp();
   const [busca, setBusca] = useState('');
   const [editando, setEditando] = useState<Linha | null | undefined>(undefined);
-  const { dados, carregando, recarregar } = useDados<Linha[]>(
+  const { dados, carregando, recarregar, falha } = useDados<Linha[]>(
     async () => ok(await supabase.from(tabela).select(select).order(ordem, { ascending: crescente })) as unknown as Linha[],
   );
 
@@ -127,7 +146,7 @@ export function PaginaCrud({
         {podeEditar && <Botao icone={<Plus className="h-4 w-4" />} onClick={() => setEditando(null)}>Novo</Botao>}
       </Cabecalho>
       <Cartao>
-        {carregando ? <Carregando /> : <Tabela colunas={cols} linhas={linhas} chave={(l) => l.id} />}
+        {falha && !dados ? <FalhaCarregamento mensagem={falha} aoTentar={recarregar} /> : carregando ? <Carregando /> : <Tabela colunas={cols} linhas={linhas} chave={(l) => l.id} />}
       </Cartao>
       <FormModal aberto={editando !== undefined} titulo={editando ? `Editar ${item.toLowerCase()}` : `Novo(a) ${item.toLowerCase()}`}
         campos={campos} inicial={editando ?? padrao} aoSalvar={salvar} aoFechar={() => setEditando(undefined)} pasta={pasta} />

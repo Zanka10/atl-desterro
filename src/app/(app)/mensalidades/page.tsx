@@ -4,7 +4,7 @@ import { BadgeCheck, CalendarClock, ChevronLeft, ChevronRight, CircleDollarSign,
 import Link from 'next/link';
 import { useState } from 'react';
 import { useApp } from '@/components/contexto';
-import { AcoesLinha, BuscaTexto, buscarTudo, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, AcoesLinha, BuscaTexto, buscarTudo, ok, useDados } from '@/components/crud';
 import { FormModal, type Campo } from '@/components/formulario';
 import { Abas, Avatar, Botao, BotaoIcone, Cabecalho, Carregando, Cartao, Indicador, Selo, TOM_STATUS, Tabela, Vazio, estiloCampo } from '@/components/ui';
 import { abrirDocumento } from '@/lib/arquivos';
@@ -31,7 +31,7 @@ export default function TaxasDeJogo() {
   const [modal, setModal] = useState<ModalTipo | null>(null);
   const [recalculando, setRecalculando] = useState(false);
 
-  const { dados, carregando, recarregar } = useDados<Dados>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<Dados>(async () => {
     const [a, m, c, f, p] = await Promise.all([
       supabase.from('atletas').select('*').order('nome'),
       buscarTudo<Mensalidade>((de, ate) => supabase.from('mensalidades').select('*').order('vencimento').order('id').range(de, ate)),
@@ -45,6 +45,7 @@ export default function TaxasDeJogo() {
       creditos: c.map((x) => ({ ...x, valor: Number(x.valor) })),
     };
   });
+  if (falha && !dados) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (carregando || !dados) return <Carregando />;
 
   const { atletas, cobrancas, creditos, fin, partidas } = dados;

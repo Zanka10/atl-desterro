@@ -3,7 +3,7 @@
 import { ArrowDownCircle, ArrowUpCircle, FileSpreadsheet, FileText, Paperclip, Plus, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/components/contexto';
-import { AcoesLinha, BuscaTexto, buscarTudo, ok, useDados } from '@/components/crud';
+import { AcoesLinha, BuscaTexto, FalhaCarregamento, buscarTudo, ok, useDados } from '@/components/crud';
 import { FormModal, type Campo } from '@/components/formulario';
 import { GraficoReceitasDespesas, GraficoSaldo, serieMensal } from '@/components/graficos';
 import { Abas, Botao, BotaoIcone, Cabecalho, Carregando, Cartao, Indicador, Selo, Tabela, Vazio, estiloCampo } from '@/components/ui';
@@ -41,12 +41,13 @@ export default function Financeiro() {
   const [busca, setBusca] = useState('');
   const [editando, setEditando] = useState<Movimentacao | null | undefined>(undefined);
 
-  const { dados: movs, carregando, recarregar } = useDados<Movimentacao[]>(async () =>
+  const { dados: movs, carregando, recarregar, falha } = useDados<Movimentacao[]>(async () =>
     (await buscarTudo<Movimentacao>((de, ate) => supabase.from('movimentacoes').select('*').order('data', { ascending: false }).order('criado_em', { ascending: false }).order('id').range(de, ate)))
       .map((m) => ({ ...m, valor: Number(m.valor) })));
   const { dados: auditoria } = useDados<Linha[]>(async () =>
     (aba === 'auditoria' ? ok(await supabase.from('auditoria').select('*').order('criado_em', { ascending: false }).limit(300)) : []), [aba, movs]);
 
+  if (falha && !movs) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (carregando || !movs) return <Carregando />;
 
   const conf = movs.filter((m) => m.status === 'confirmado');

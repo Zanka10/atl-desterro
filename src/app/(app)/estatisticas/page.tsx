@@ -4,7 +4,7 @@ import { FileSpreadsheet, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useApp } from '@/components/contexto';
-import { buscarTudo, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, buscarTudo, ok, useDados } from '@/components/crud';
 import { Abas, Avatar, Botao, Cabecalho, Carregando, Cartao, Indicador, Selo, Tabela, Vazio, estiloCampo } from '@/components/ui';
 import { resultado } from '@/lib/campos';
 import { Ranking } from '@/components/ranking';
@@ -20,7 +20,7 @@ export default function Estatisticas() {
   const { supabase, config } = useApp();
   const [aba, setAba] = useState<Aba>('geral');
   const [temporada, setTemporada] = useState('');
-  const { dados, carregando } = useDados<Dados>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<Dados>(async () => {
     const [p, s, a] = await Promise.all([
       supabase.from('partidas').select('*').order('data_hora', { ascending: false }),
       buscarTudo<Estatistica>((de, ate) => supabase.from('estatisticas_partida').select('*').order('id').range(de, ate)),
@@ -28,6 +28,7 @@ export default function Estatisticas() {
     ]);
     return { partidas: ok(p), stats: s, atletas: ok(a) };
   });
+  if (falha && !dados) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (carregando || !dados) return <Carregando />;
 
   const anos = [...new Set(dados.partidas.map((p) => p.temporada))].sort((a, b) => b - a);

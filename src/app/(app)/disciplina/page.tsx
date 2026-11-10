@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useApp } from '@/components/contexto';
-import { PaginaCrud, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, PaginaCrud, ok, useDados } from '@/components/crud';
 import { Abas, Avatar, Cabecalho, Carregando, Cartao, Indicador, Selo, TOM_STATUS, Tabela, estiloCampo } from '@/components/ui';
 import { camposLesao, camposOcorrencia, sincronizarLesao, sincronizarSuspensao } from '@/lib/campos';
 import { GRAVIDADE, OPCOES_STATUS_ATLETA, PAPEIS_COMISSAO, POSICOES, STATUS_ATLETA, TIPOS_OCORRENCIA } from '@/lib/constants';
@@ -16,7 +16,8 @@ export default function Disciplina() {
   const { supabase, pode, sucesso, erro } = useApp();
   const verLesoes = pode(...PAPEIS_COMISSAO);
   const [aba, setAba] = useState<Aba>('elenco');
-  const { dados: atletas, recarregar } = useDados<Atleta[]>(async () => ok(await supabase.from('atletas').select('*').order('nome')), [aba]);
+  const { dados: atletas, recarregar, falha } = useDados<Atleta[]>(async () => ok(await supabase.from('atletas').select('*').order('nome')), [aba]);
+  if (falha && !atletas) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (!atletas) return <Carregando />;
 
   const opcoes = atletas.map((a) => ({ value: a.id, label: a.nome }));

@@ -3,7 +3,7 @@
 import { KeyRound, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/components/contexto';
-import { AcoesLinha, ok, useDados } from '@/components/crud';
+import { FalhaCarregamento, AcoesLinha, ok, useDados } from '@/components/crud';
 import { FormModal, type Campo } from '@/components/formulario';
 import { Botao, BotaoIcone, Cabecalho, Carregando, Cartao, Selo, Tabela } from '@/components/ui';
 import { OPCOES_PAPEL, PAPEIS } from '@/lib/constants';
@@ -21,10 +21,11 @@ const DESCRICOES: Record<string, string> = {
 export default function Usuarios() {
   const { supabase, perfil, sucesso, erro, confirmar } = useApp();
   const [modal, setModal] = useState<{ item?: Perfil } | null>(null);
-  const { dados, carregando, recarregar } = useDados<{ perfis: Perfil[]; atletas: Pick<Atleta, 'id' | 'nome'>[] }>(async () => {
+  const { dados, carregando, recarregar, falha } = useDados<{ perfis: Perfil[]; atletas: Pick<Atleta, 'id' | 'nome'>[] }>(async () => {
     const [p, a] = await Promise.all([supabase.from('profiles').select('*').order('nome'), supabase.from('atletas').select('id, nome').order('nome')]);
     return { perfis: ok(p), atletas: ok(a) };
   });
+  if (falha && !dados) return <FalhaCarregamento mensagem={falha} aoTentar={recarregar} />;
   if (carregando || !dados) return <Carregando />;
 
   const opcoesAtleta = dados.atletas.map((a) => ({ value: a.id, label: a.nome }));
