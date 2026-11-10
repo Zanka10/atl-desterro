@@ -26,7 +26,7 @@ export const MSG = {
     `*CONVOCAÇÃO — ${c.nome_clube.toUpperCase()}*\n\n${nome ? `Fala, ${nome}! Você foi convocado.\n\n` : 'Atletas convocados, atenção:\n\n'}` +
     `${jogo(p, c.nome_clube)}\n💰 Taxa do jogo: *${moeda(c.valor_jogo)}* — quem confirmar deve pagar até *${dataBR(diaBR(p.data_hora))}* (dia do jogo).\n` +
     (c.chave_pix ? `Pix: ${c.chave_pix}\n` : '') +
-    `\nConfirme sua presença pelo portal do atleta:\n${link}`,
+    `\nConfirme sua presença no portal do atleta (entre com seu telefone e PIN):\n${link}`,
   lembrete: (p: Partida, c: Config) =>
     `*LEMBRETE DE JOGO — ${c.nome_clube.toUpperCase()}*\n\n${jogo(p, c.nome_clube)}\n💰 Confirmados: pagar a taxa de *${moeda(c.valor_jogo)}* até hoje, dia do jogo.` +
     (c.chave_pix ? ` Pix: ${c.chave_pix}` : '') +
@@ -44,6 +44,8 @@ export const MSG = {
   },
   pagamento: (nome: string, m: Pick<Mensalidade, 'competencia' | 'valor' | 'descricao'>, data: string, c: Config) =>
     `Olá, ${nome}! ✅\n\nConfirmamos o recebimento do seu pagamento: *${nomeCobranca(m)}* (${moeda(m.valor)}) em ${dataBR(data)}.\n\nObrigado por manter o *${c.nome_clube}* em dia! 💚`,
+  acesso: (nome: string, telefone: string, pin: string, link: string, c: Config) =>
+    `Olá, ${nome}! 👋\n\nSeu acesso ao *portal do atleta — ${c.nome_clube}*:\n\n🔗 ${link}\n📱 Telefone: *${telefone}*\n🔑 PIN: *${pin}*\n\nPelo portal você confirma presença nos jogos, vê suas taxas e créditos e envia comprovantes.\nNão compartilhe seu PIN. Você pode trocá-lo em "Meus dados".`,
   comunicado: (titulo: string, conteudo: string, c: Config) =>
     `*📢 ${c.nome_clube.toUpperCase()} — ${titulo.toUpperCase()}*\n\n${conteudo}`,
 };

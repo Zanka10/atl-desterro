@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, Check, Copy, MapPin, Megaphone, Paperclip, Pencil, Pin, Upload, X } from 'lucide-react';
+import { CalendarClock, Check, Copy, KeyRound, MapPin, Megaphone, Paperclip, Pencil, Pin, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { ArteEscalacao } from '@/components/arte';
 import { useApp } from '@/components/contexto';
@@ -35,6 +35,7 @@ export default function Portal() {
   const { supabase, perfil, config, sucesso, erro, info } = useApp();
   const [aba, setAba] = useState<Aba>('inicio');
   const [editando, setEditando] = useState(false);
+  const [trocandoPin, setTrocandoPin] = useState(false);
   const [verEscalacao, setVerEscalacao] = useState<Partida | null>(null);
   const [respondendo, setRespondendo] = useState<string | null>(null);
   const arquivo = useRef<HTMLInputElement>(null);
@@ -116,6 +117,13 @@ export default function Portal() {
     if (error) throw error;
     sucesso('Seus dados foram atualizados.');
     await recarregar();
+  };
+
+  const trocarPin = async (v: Linha) => {
+    const r = await fetch('/api/meu-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ atual: v.atual ?? '', novo: v.novo }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.erro || 'Não foi possível trocar o PIN.');
+    sucesso('PIN alterado. Use o novo PIN no próximo acesso.');
   };
 
   const CartaoJogo = ({ p }: { p: Partida }) => {
@@ -290,20 +298,28 @@ export default function Portal() {
       )}
 
       {aba === 'dados' && (
-        <Cartao titulo="Meus dados" acao={<Botao variante="secundario" tamanho="sm" icone={<Pencil className="h-3.5 w-3.5" />} onClick={() => setEditando(true)}>Atualizar</Botao>}>
+        <Cartao titulo="Meus dados" acao={<div className="flex gap-2">
+          <Botao variante="secundario" tamanho="sm" icone={<KeyRound className="h-3.5 w-3.5" />} onClick={() => setTrocandoPin(true)}>Trocar PIN</Botao>
+          <Botao variante="secundario" tamanho="sm" icone={<Pencil className="h-3.5 w-3.5" />} onClick={() => setEditando(true)}>Atualizar</Botao>
+        </div>}>
           <dl className="grid grid-cols-2 gap-4 p-4 text-sm">
             {[
               ['Nome completo', eu.nome], ['Apelido', eu.apelido], ['Telefone / WhatsApp', telefoneBR(eu.telefone)], ['E-mail', eu.email],
               ['Nascimento', eu.data_nascimento ? `${dataBR(eu.data_nascimento)} (${idade(eu.data_nascimento)} anos)` : null],
               ['Posição', `${POSICOES[eu.posicao].label}${eu.posicao_secundaria ? ` / ${POSICOES[eu.posicao_secundaria].label}` : ''}`],
               ['Número da camisa', eu.numero], ['Pé dominante', eu.pe_dominante ? PE[eu.pe_dominante] : null], ['No clube desde', eu.data_entrada ? dataBR(eu.data_entrada) : null],
-              ['Acesso ao portal', perfil.email],
+              ['Entrada no portal', `Telefone ${telefoneBR(eu.telefone)} + PIN`],
             ].map(([r, v]) => <div key={String(r)}><dt className="text-xs uppercase tracking-wide text-zinc-500">{r}</dt><dd className="mt-0.5 break-words text-zinc-900">{v || '—'}</dd></div>)}
           </dl>
-          <p className="border-t border-zinc-100 px-4 py-3 text-xs text-zinc-500">Nome, posição e número são alterados pela comissão técnica. Para trocar sua senha, saia e use “Esqueci minha senha” na tela de login.</p>
+          <p className="border-t border-zinc-100 px-4 py-3 text-xs text-zinc-500">Nome, posição e número são alterados pela comissão técnica. Se mudar o telefone aqui, use o novo número para entrar no portal.</p>
         </Cartao>
       )}
 
+      <FormModal aberto={trocandoPin} titulo="Trocar PIN" textoBotao="Trocar PIN" aoSalvar={trocarPin} aoFechar={() => setTrocandoPin(false)} campos={[
+        { nome: 'atual', rotulo: 'PIN atual', tipo: 'pin', dica: 'Deixe em branco se você nunca recebeu um PIN.' },
+        { nome: 'novo', rotulo: 'Novo PIN (4 números)', tipo: 'pin', obrigatorio: true },
+        { nome: 'confirma', rotulo: 'Repita o novo PIN', tipo: 'pin', obrigatorio: true, validar: (v, t) => (v === t.novo ? undefined : 'Os PINs não conferem.') },
+      ]} />
       <FormModal aberto={editando} titulo="Atualizar meus dados" campos={CAMPOS_DADOS} inicial={eu} aoSalvar={salvarDados} aoFechar={() => setEditando(false)} pasta={`atletas/${eu.id}`} />
       <Modal aberto={!!verEscalacao} titulo={verEscalacao ? `Escalação x ${verEscalacao.adversario}` : ''} aoFechar={() => setVerEscalacao(null)} largo>
         {verEscalacao && <ArteEscalacao partida={verEscalacao} atletas={elenco} escalacao={escalacao.filter((e) => e.partida_id === verEscalacao.id)} somenteLeitura />}

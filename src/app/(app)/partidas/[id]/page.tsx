@@ -72,7 +72,7 @@ export default function DetalhePartida() {
   const foraDaLista = atletas.filter((a) => !convocados.has(a.id) && a.status !== 'inativo');
   const conta = (s: StatusConvocacao) => convocacoes.filter((c) => c.status === s).length;
   const r = resultado(p);
-  const linkPortal = typeof window !== 'undefined' ? `${window.location.origin}/portal` : '/portal';
+  const linkPortal = typeof window !== 'undefined' ? `${window.location.origin}/entrar` : '/entrar';
   const atualizar = async () => { await recarregar(); setVersao((v) => v + 1); };
 
   const statusInicial = (a: Atleta): StatusConvocacao => (a.status === 'lesionado' ? 'lesionado' : a.status === 'suspenso' ? 'suspenso' : 'aguardando');

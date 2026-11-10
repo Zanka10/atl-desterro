@@ -12,7 +12,7 @@ import { Botao, Modal, Rotulo, cx, estiloCampo } from './ui';
 export type Campo = {
   nome: string;
   rotulo: string;
-  tipo?: 'texto' | 'tel' | 'email' | 'senha' | 'numero' | 'dinheiro' | 'data' | 'datahora' | 'selecao' | 'area' | 'caixa' | 'imagem' | 'arquivo' | 'cor';
+  tipo?: 'texto' | 'tel' | 'email' | 'senha' | 'pin' | 'numero' | 'dinheiro' | 'data' | 'datahora' | 'selecao' | 'area' | 'caixa' | 'imagem' | 'arquivo' | 'cor';
   opcoes?: Opcao[] | ((v: Linha) => Opcao[]);
   obrigatorio?: boolean;
   largo?: boolean;
@@ -71,6 +71,7 @@ export function FormModal({ aberto, titulo, campos, inicial, aoSalvar, aoFechar,
         if (c.tipo === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) novos[c.nome] = 'E-mail inválido.';
         if (c.tipo === 'tel' && String(val).replace(/\D/g, '').length < 10) novos[c.nome] = 'Informe o telefone com DDD.';
         if (c.tipo === 'senha' && String(val).length < 8) novos[c.nome] = 'A senha deve ter pelo menos 8 caracteres.';
+        if (c.tipo === 'pin' && !/^\d{4}$/.test(String(val))) novos[c.nome] = 'O PIN tem exatamente 4 números.';
         if (c.tipo === 'numero' || c.tipo === 'dinheiro') {
           const n = Number(val);
           if (Number.isNaN(n)) novos[c.nome] = 'Número inválido.';
@@ -165,9 +166,9 @@ export function FormModal({ aberto, titulo, campos, inicial, aoSalvar, aoFechar,
               );
               break;
             default: {
-              const tipos: Record<string, string> = { tel: 'tel', email: 'email', senha: 'password', numero: 'number', dinheiro: 'number', data: 'date', datahora: 'datetime-local' };
+              const tipos: Record<string, string> = { tel: 'tel', email: 'email', senha: 'password', pin: 'password', numero: 'number', dinheiro: 'number', data: 'date', datahora: 'datetime-local' };
               entrada = <input {...comum} type={tipos[c.tipo ?? ''] ?? 'text'} onChange={mudar} step={c.tipo === 'dinheiro' ? '0.01' : undefined}
-                min={c.min} max={c.max} inputMode={c.tipo === 'dinheiro' ? 'decimal' : undefined} autoComplete={c.tipo === 'senha' ? 'new-password' : 'off'} />;
+                min={c.min} max={c.max} inputMode={c.tipo === 'dinheiro' ? 'decimal' : c.tipo === 'pin' ? 'numeric' : undefined} maxLength={c.tipo === 'pin' ? 4 : undefined} autoComplete={c.tipo === 'senha' ? 'new-password' : 'off'} />;
             }
           }
           return (

@@ -77,6 +77,7 @@ function FormLogin() {
         <Botao type="submit" carregando={carregando} className="w-full">Entrar</Botao>
       </form>
       <div className="mt-4 flex flex-col gap-1.5 text-center text-sm">
+        <Link href="/entrar" className="font-medium text-primary hover:underline">Sou atleta: entrar com telefone e PIN</Link>
         <Link href="/recuperar-senha" className="text-primary hover:underline">Esqueci minha senha</Link>
         {!inicializado && <Link href="/primeiro-acesso" className="font-medium text-primary hover:underline">Primeiro acesso: criar o administrador</Link>}
       </div>
@@ -132,6 +133,65 @@ export function TelaPrimeiroAcesso() {
         </form>
       )}
       <p className="mt-4 text-center text-sm"><Link href="/login" className="text-primary hover:underline">Voltar para o login</Link></p>
+    </Moldura>
+  );
+}
+
+const mascaraTelefone = (v: string) => {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 2) return d.length ? `(${d}` : '';
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
+export function TelaEntrarAtleta() {
+  const router = useRouter();
+  const [telefone, setTelefone] = useState('');
+  const [pin, setPin] = useState('');
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
+
+  useEffect(() => {
+    try { const t = localStorage.getItem('telefone-atleta'); if (t) setTelefone(t); } catch { /* sem armazenamento */ }
+  }, []);
+
+  const entrar = async (e: FormEvent) => {
+    e.preventDefault();
+    if (telefone.replace(/\D/g, '').length < 10) return setErro('Informe o telefone com DDD.');
+    if (!/^\d{4}$/.test(pin)) return setErro('O PIN tem 4 números.');
+    setCarregando(true);
+    setErro('');
+    try {
+      const r = await fetch('/api/entrar-atleta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone, pin }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.erro || 'Não foi possível entrar.');
+      try { localStorage.setItem('telefone-atleta', telefone); } catch { /* sem armazenamento */ }
+      router.replace('/portal');
+      router.refresh();
+    } catch (ex) {
+      setErro(traduzir((ex as Error).message));
+      setPin('');
+      setCarregando(false);
+    }
+  };
+
+  return (
+    <Moldura titulo="Portal do atleta" descricao="Entre com o telefone cadastrado no clube e o seu PIN.">
+      {erro && <Alerta tipo="erro">{erro}</Alerta>}
+      <form onSubmit={entrar} className="space-y-3" noValidate>
+        <Rotulo rotulo="Telefone / WhatsApp">
+          <input type="tel" inputMode="tel" autoComplete="tel-national" placeholder="(48) 99999-0000" className={estiloCampo}
+            value={telefone} onChange={(e) => setTelefone(mascaraTelefone(e.target.value))} />
+        </Rotulo>
+        <Rotulo rotulo="PIN (4 números)">
+          <input type="password" inputMode="numeric" autoComplete="one-time-code" maxLength={4} className={`${estiloCampo} text-center text-xl tracking-[0.6em]`}
+            value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} />
+        </Rotulo>
+        <Botao type="submit" carregando={carregando} className="w-full">Entrar</Botao>
+      </form>
+      <p className="mt-4 text-center text-xs text-zinc-500">Não tem PIN ou esqueceu? Peça à comissão técnica um novo PIN pelo WhatsApp.</p>
+      <p className="mt-2 text-center text-sm"><Link href="/login" className="text-primary hover:underline">Sou da diretoria / comissão</Link></p>
     </Moldura>
   );
 }

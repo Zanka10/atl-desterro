@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { SUPABASE_KEY, SUPABASE_URL, supabaseConfigurado } from '@/lib/supabase/client';
 
-const PUBLICAS = ['/login', '/primeiro-acesso', '/recuperar-senha', '/redefinir-senha', '/auth'];
+const PUBLICAS = ['/login', '/entrar', '/primeiro-acesso', '/recuperar-senha', '/redefinir-senha', '/auth'];
 
 export async function proxy(request: NextRequest) {
   if (!supabaseConfigurado) return NextResponse.next();
@@ -22,11 +22,12 @@ export async function proxy(request: NextRequest) {
   const publica = PUBLICAS.some((p) => caminho.startsWith(p));
   if (!user && !publica && !caminho.startsWith('/api')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    // Quem tenta abrir o portal vai para a entrada do atleta (telefone + PIN)
+    url.pathname = caminho.startsWith('/portal') ? '/entrar' : '/login';
     url.search = '';
     return NextResponse.redirect(url);
   }
-  if (user && (caminho === '/login' || caminho === '/primeiro-acesso')) {
+  if (user && (caminho === '/login' || caminho === '/entrar' || caminho === '/primeiro-acesso')) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);

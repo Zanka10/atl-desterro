@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
     const msg = /already.*registered|already exists/i.test(error.message) ? 'Já existe um usuário com este e-mail.' : error.message;
     return NextResponse.json({ erro: msg }, { status: 400 });
   }
+  // O Supabase grava o app_metadata logo após inserir o usuário, então o gatilho do banco
+  // cria o perfil como inativo. Ajusta o perfil aqui com o papel escolhido pelo administrador.
+  const { error: e2 } = await aut.admin.from('profiles')
+    .update({ nome: nome.trim(), papel, atleta_id: papel === 'atleta' ? atleta_id : null, ativo: true })
+    .eq('id', data.user.id);
+  if (e2) return NextResponse.json({ erro: `Usuário criado, mas não foi possível ativá-lo: ${e2.message}` }, { status: 500 });
   return NextResponse.json({ id: data.user.id });
 }
 

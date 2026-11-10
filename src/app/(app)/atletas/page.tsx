@@ -1,8 +1,9 @@
 'use client';
 
-import { Plus, Users } from 'lucide-react';
+import { KeyRound, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ModalAcessos } from '@/components/acesso-atleta';
 import { useApp } from '@/components/contexto';
 import { BuscaTexto, ok, useDados } from '@/components/crud';
 import { FormModal } from '@/components/formulario';
@@ -18,6 +19,7 @@ export default function Atletas() {
   const [status, setStatus] = useState('');
   const [posicao, setPosicao] = useState('');
   const [novo, setNovo] = useState(false);
+  const [acessos, setAcessos] = useState(false);
   const { dados, carregando, recarregar } = useDados<Atleta[]>(async () => ok(await supabase.from('atletas').select('*').order('nome')));
 
   const salvar = async (v: Linha) => {
@@ -34,6 +36,7 @@ export default function Atletas() {
   return (
     <>
       <Cabecalho titulo="Atletas" descricao={dados ? `${dados.length} atleta(s) cadastrado(s) · ${dados.filter((a) => a.status === 'ativo').length} ativo(s)` : undefined}>
+        <Botao variante="secundario" icone={<KeyRound className="h-4 w-4" />} onClick={() => setAcessos(true)} disabled={!dados?.length}>Acessos ao portal</Botao>
         <Botao icone={<Plus className="h-4 w-4" />} onClick={() => setNovo(true)}>Novo atleta</Botao>
       </Cabecalho>
 
@@ -84,6 +87,7 @@ export default function Atletas() {
           })}
         </div>
       )}
+      {acessos && dados && <ModalAcessos aberto atletas={dados} aoFechar={() => setAcessos(false)} />}
       <FormModal aberto={novo} titulo="Novo atleta" campos={CAMPOS_ATLETA} inicial={{ status: 'ativo', data_entrada: hojeBR() }} aoSalvar={salvar} aoFechar={() => setNovo(false)} pasta="atletas" />
     </>
   );

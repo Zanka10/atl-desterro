@@ -14,7 +14,7 @@ Plataforma web do clube: atletas, mensalidades, caixa, partidas, convocação, e
 2. No menu **SQL Editor**, abra uma nova consulta, cole **todo** o conteúdo de
    [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) e clique em **Run**.
    Isso cria as tabelas, as regras de permissão, a auditoria e as pastas de arquivos.
-   Em seguida, faça o mesmo com [`supabase/migrations/0002_taxa_por_jogo.sql`](supabase/migrations/0002_taxa_por_jogo.sql) (taxa por jogo).
+   Em seguida, faça o mesmo, nesta ordem, com [`0002_taxa_por_jogo.sql`](supabase/migrations/0002_taxa_por_jogo.sql) (taxa por jogo e crédito) e [`0003_acesso_telefone.sql`](supabase/migrations/0003_acesso_telefone.sql) (entrada do atleta por telefone + PIN).
 3. Em **Authentication → URL Configuration**:
    - **Site URL:** o endereço do sistema (em testes: `http://localhost:3000`).
    - **Redirect URLs:** adicione `http://localhost:3000/auth/callback` e, depois de publicar, `https://SEU-DOMINIO/auth/callback`.
@@ -75,7 +75,7 @@ As permissões são aplicadas **no banco de dados** (Row Level Security), não a
 a situação financeira de um atleta não é visível para os outros atletas nem para a comissão técnica;
 lesões e observações da comissão ficam restritas a administrador e comissão técnica.
 
-Para dar acesso a um atleta: abra a ficha dele → **Criar acesso ao portal** (ou **Usuários → Novo usuário**, perfil Atleta).
+**Acesso dos atletas:** o atleta entra em `/entrar` com o **telefone cadastrado** e um **PIN de 4 números** — sem e-mail nem senha. A comissão/diretoria gera o PIN em **Atletas → Acessos ao portal** (todos de uma vez) ou na ficha do atleta; o WhatsApp abre com a mensagem pronta (link, telefone e PIN). O PIN é guardado só como hash, aparece uma única vez e pode ser trocado pelo atleta em *Meus dados*. Após 5 PINs errados, a entrada fica bloqueada por 15 minutos. Se o atleta esquecer o PIN, gere um novo. O link enviado na convocação leva direto para essa tela.
 
 ---
 

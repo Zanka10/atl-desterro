@@ -4,6 +4,7 @@ import { ArrowLeft, KeyRound, MessageCircle, Pencil, Plus, Trash2 } from 'lucide
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
+import { CartaoAcesso } from '@/components/acesso-atleta';
 import { useApp } from '@/components/contexto';
 import { FalhaCarregamento, AcoesLinha, ok, useDados } from '@/components/crud';
 import { FormModal, type Campo } from '@/components/formulario';
@@ -177,9 +178,8 @@ export default function FichaAtleta() {
       <Abas abas={abas} ativa={aba} aoMudar={setAba} />
 
       {aba === 'dados' && (
-        <Cartao titulo="Dados pessoais" acao={pode('admin') && (acesso
-          ? <Selo tom={acesso.ativo ? 'verde' : 'cinza'}>Portal: {acesso.email}</Selo>
-          : <Botao variante="secundario" tamanho="sm" icone={<KeyRound className="h-3.5 w-3.5" />} onClick={() => setModal({ tipo: 'acesso' })}>Criar acesso ao portal</Botao>)}>
+        <div className="space-y-4">
+        <Cartao titulo="Dados pessoais">
           <dl className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3">
             <Dado rotulo="Nascimento">{a.data_nascimento ? `${dataBR(a.data_nascimento)} (${idade(a.data_nascimento)} anos)` : null}</Dado>
             <Dado rotulo="Telefone / WhatsApp">{telefoneBR(a.telefone)}</Dado>
@@ -190,6 +190,8 @@ export default function FichaAtleta() {
             <div className="col-span-2 sm:col-span-3"><Dado rotulo="Observações"><span className="whitespace-pre-wrap">{a.observacoes}</span></Dado></div>
           </dl>
         </Cartao>
+          {pode('admin', 'diretoria', 'comissao') && <CartaoAcesso atleta={a} />}
+        </div>
       )}
 
       {aba === 'financeiro' && verFin && (
